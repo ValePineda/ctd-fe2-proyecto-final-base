@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SuscribeImage, CloseButton as Close } from "../../assets";
-import { obtenerNoticias } from "./fakeRest";
+import { INoticias, obtenerNoticias } from "./fakeRest";
 import {
   CloseButton,
   TarjetaModal,
@@ -31,39 +31,65 @@ export interface INoticiasNormalizadas {
   descripcionCorta?: string;
 }
 
-const Noticias = () => {
+export const Noticias = () => {
   const [noticias, setNoticias] = useState<INoticiasNormalizadas[]>([]);
   const [modal, setModal] = useState<INoticiasNormalizadas | null>(null);
+
+  /**
+   * Funcion que recibe una noticia y devuelve el titulo con la primera letra de cada palabra
+   * en mayuscula
+   */
+  const normalizarTitulo = (noticia: INoticias) => {
+    const titulo = noticia.titulo
+      .split(" ")
+      .map((str) => {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      })
+      .join(" ");
+
+    return titulo;
+  };
+
+  /**
+   * Funcion que recibe una noticia y toma la fecha para devolver solo los
+   * minutos transcurridos
+   */
+  const obtenerMinutos = (noticia: INoticias) => {
+    const ahora = new Date();
+    const minutosTranscurridos = Math.floor(
+      (ahora.getTime() - noticia.fecha.getTime()) / 60000
+    );
+
+    return minutosTranscurridos;
+  };
+
+  /**
+   * Funcion que recibe un array de noticias y devuelve un array con la
+   * informacion de las noticias normalizada
+   */
+
+  const nomalizarInformacion = (noticias: INoticias[]) => {
+    return noticias.map((noticia) => {
+      const titulo = normalizarTitulo(noticia);
+      const minutosTranscurridos = obtenerMinutos(noticia);
+
+      return {
+        id: noticia.id,
+        titulo,
+        descripcion: noticia.descripcion,
+        fecha: `Hace ${minutosTranscurridos} minutos`,
+        esPremium: noticia.esPremium,
+        imagen: noticia.imagen,
+        descripcionCorta: noticia.descripcion.substring(0, 100),
+      };
+    });
+  };
 
   useEffect(() => {
     const obtenerInformacion = async () => {
       const respuesta = await obtenerNoticias();
-
-      const data = respuesta.map((n) => {
-        const titulo = n.titulo
-          .split(" ")
-          .map((str) => {
-            return str.charAt(0).toUpperCase() + str.slice(1);
-          })
-          .join(" ");
-
-        const ahora = new Date();
-        const minutosTranscurridos = Math.floor(
-          (ahora.getTime() - n.fecha.getTime()) / 60000
-        );
-
-        return {
-          id: n.id,
-          titulo,
-          descripcion: n.descripcion,
-          fecha: `Hace ${minutosTranscurridos} minutos`,
-          esPremium: n.esPremium,
-          imagen: n.imagen,
-          descripcionCorta: n.descripcion.substring(0, 100),
-        };
-      });
-
-      setNoticias(data);
+      const dataNormalizada = nomalizarInformacion(respuesta);
+      setNoticias(dataNormalizada);
     };
 
     obtenerInformacion();
@@ -73,22 +99,27 @@ const Noticias = () => {
     <ContenedorNoticias>
       <TituloNoticias>Noticias de los Simpsons</TituloNoticias>
       <ListaNoticias>
-        {noticias.map((n) => (
+        {noticias.map((noticia) => (
           <TarjetaNoticia>
-            <ImagenTarjetaNoticia src={n.imagen} />
-            <TituloTarjetaNoticia>{n.titulo}</TituloTarjetaNoticia>
-            <FechaTarjetaNoticia>{n.fecha}</FechaTarjetaNoticia>
+            <ImagenTarjetaNoticia src={noticia.imagen} />
+            <TituloTarjetaNoticia>{noticia.titulo}</TituloTarjetaNoticia>
+            <FechaTarjetaNoticia>{noticia.fecha}</FechaTarjetaNoticia>
             <DescripcionTarjetaNoticia>
-              {n.descripcionCorta}
+              {noticia.descripcionCorta}
             </DescripcionTarjetaNoticia>
-            <BotonLectura onClick={() => setModal(n)}>Ver más</BotonLectura>
+            <BotonLectura onClick={() => setModal(noticia)}>
+              Ver más
+            </BotonLectura>
           </TarjetaNoticia>
         ))}
         {modal ? (
           modal.esPremium ? (
             <ContenedorModal>
               <TarjetaModal>
-                <CloseButton onClick={() => setModal(null)}>
+                <CloseButton
+                  onClick={() => setModal(null)}
+                  aria-label="Cerrar modal"
+                >
                   <img src={Close} alt="close-button" />
                 </CloseButton>
                 <ImagenModal src={SuscribeImage} alt="mr-burns-excelent" />
@@ -114,7 +145,10 @@ const Noticias = () => {
           ) : (
             <ContenedorModal>
               <TarjetaModal>
-                <CloseButton onClick={() => setModal(null)}>
+                <CloseButton
+                  onClick={() => setModal(null)}
+                  aria-label="Cerrar modal"
+                >
                   <img src={Close} alt="close-button" />
                 </CloseButton>
                 <ImagenModal src={modal.imagen} alt="news-image" />
@@ -131,4 +165,4 @@ const Noticias = () => {
   );
 };
 
-export default Noticias;
+

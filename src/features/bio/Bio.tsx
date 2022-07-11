@@ -9,7 +9,7 @@ import {
   BioDescription,
 } from "./styled";
 
-const Bio = () => {
+export const Bio = () => {
   const [bioActiva, setBioActiva] = useState(
     INFO_SIMPSONS[NombresSimpsons.BART]
   );
@@ -46,4 +46,3 @@ const Bio = () => {
   );
 };
 
-export default Bio;

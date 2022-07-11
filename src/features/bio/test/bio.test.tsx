@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import Bio from "../Bio";
+import {Bio} from "../Bio";
 
 describe("Componente bio", () => {
   it("El componente bio se debe renderizar correctamente", () => {
